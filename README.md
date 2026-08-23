@@ -1,0 +1,2 @@
+# Ausstellungsmanager
+Mehrvereinsfähige Webanwendung zur Verwaltung von Rassegeflügelausstellungen
