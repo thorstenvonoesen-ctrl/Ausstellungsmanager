@@ -40,6 +40,7 @@ Auf Vercel muss `DATABASE_URL` für die gewünschten Umgebungen gesetzt sein. Da
 ```bash
 npm run typecheck
 npm run lint
+npm run test:multitenancy
 npm run build
 ```
 Mehrvereinsfähige Webanwendung zur Verwaltung von Rassegeflügelausstellungen
