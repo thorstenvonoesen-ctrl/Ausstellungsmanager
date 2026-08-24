@@ -1,0 +1,6 @@
+import type{ShowFee}from"@/lib/types";
+export type PublicDraft={firstName:string;lastName:string;street:string;houseNumber:string;postalCode:string;city:string;phone:string;email:string;livestockNumber:string;associationName:string;ageGroup:"adult"|"youth";sectionId:string;singleCount:number;aviaryCount:number;stemCount:number;selectedFeeIds:string[];consent:boolean};
+export type PublicAnimal={categoryId:string;breedId:string;variantId:string;sex:"1,0"|"0,1";ageClass:"young"|"old";ringNumber:string;ownBreeding:boolean;collection:string;department:string;salePrice:string};
+export const draftKey=(slug:string)=>`public-entry:${slug}`;
+export const money=(amount:number)=>amount.toLocaleString("de-DE",{style:"currency",currency:"EUR"});
+export function calculateFees(fees:ShowFee[],draft:PublicDraft){return fees.filter(f=>f.mandatory||draft.selectedFeeIds.includes(f.id)).map(f=>{const quantity=f.fee_type==="animal"?draft.singleCount:f.fee_type==="aviary"?draft.aviaryCount:f.fee_type==="stem"?draft.stemCount:1,unit=draft.ageGroup==="youth"&&f.youth_amount!==null?Number(f.youth_amount):Number(f.amount);return{...f,quantity,unit,total:Math.round(quantity*unit*100)/100}}).filter(f=>f.quantity>0)}

@@ -14,11 +14,14 @@
     "db:migrate-independent-operator": "dotenv -e .env.local -- tsx scripts/migrate-independent-operator.ts",
     "operator:setup": "tsx scripts/setup-operator.ts",
     "db:migrate-masterdata": "tsx scripts/migrate-masterdata-public-entries.ts",
+    "db:migrate-public-entry": "tsx scripts/migrate-public-entry-workflow.ts",
     "masterdata:import": "tsx scripts/import-masterdata.ts",
     "masterdata:extract-bdrg": "python scripts/extract-bdrg-masterdata.py",
     "masterdata:verify-bdrg": "tsx scripts/verify-bdrg-import.ts",
     "db:check": "dotenv -e .env.local -- tsx scripts/check-schema.ts",
-    "test:multitenancy": "node scripts/test-multitenancy.mjs"
+    "test:multitenancy": "node scripts/test-multitenancy.mjs",
+    "test:public-entry": "node scripts/test-public-entry.mjs",
+    "test:public-entry-integration": "tsx scripts/test-public-entry-integration.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
@@ -26,6 +29,7 @@
     "next": "^16.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "server-only": "^0.0.1",
     "zod": "^4.0.0"
   },
   "devDependencies": {

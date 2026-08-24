@@ -12,6 +12,8 @@ async function main() {
   if (!databaseUrl) throw new Error("DATABASE_URL ist nicht gesetzt.");
 
   const sql = neon(databaseUrl);
+  const feeConstraints = await sql`SELECT pg_get_constraintdef(oid) AS definition FROM pg_constraint WHERE conrelid='show_fees'::regclass`;
+  console.log("[schema] show_fees constraints:",feeConstraints.map(row=>String(row.definition)).join(" | "));
   const rows = await sql`
     SELECT table_schema, table_name, column_name, data_type
     FROM information_schema.columns
@@ -48,7 +50,7 @@ async function main() {
 
   if (!valid) {
     console.error("[schema] Vorhandene Anwendungstabellen:", [...available.keys()].join(", "));
-    for (const table of ["public.clubs", "public.shows", "public.exhibitors", "public.entries", "public.animals", "public.breed_color_variants", "public.breeds", "public.color_variants"]) {
+    for (const table of ["public.clubs", "public.shows", "public.exhibitors", "public.entries", "public.animals", "public.show_fees", "public.entry_fee_items", "public.breed_color_variants", "public.breeds", "public.color_variants"]) {
       const columns = columnTypes.get(table);
       if (columns) console.error(`[schema] ${table}: ${columns.join(", ")}`);
     }

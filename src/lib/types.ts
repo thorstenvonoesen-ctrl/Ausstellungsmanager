@@ -5,3 +5,6 @@ export type AnimalEntry = { id: string; entry_id: string; exhibition_id: string;
 export type BreedVariant = { id: string; breed: string; color: string };
 export type MasterdataOption={id:string;name:string;parent_id?:string;variant_id?:string};
 export type MasterdataHierarchy={categories:MasterdataOption[];groups:MasterdataOption[];breeds:MasterdataOption[];colors:MasterdataOption[]};
+export type ShowFee={id:string;name:string;fee_type:string;amount:string;youth_amount:string|null;mandatory:boolean;active:boolean;sort_order:number};
+export type ShowSection={id:string;name:string};
+export type PublicShow={id:string;club_id:string;title:string;venue:string;registration_deadline:string;status:string;club_name:string;club_active:boolean;fees:ShowFee[];sections:ShowSection[]};
