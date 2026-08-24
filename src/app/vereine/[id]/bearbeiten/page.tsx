@@ -1,1 +1,1 @@
-import { redirect } from "next/navigation";import { requireOperator } from "@/lib/club-context";export default async function Page({params}:{params:Promise<{id:string}>}){await requireOperator();const{id}=await params;redirect(`/vereine/${id}`)}
+import { redirect } from "next/navigation";import { requireOperator } from "@/lib/club-context";export default async function Page({params}:{params:Promise<{id:string}>}){await requireOperator();const{id}=await params;redirect(`/betreiber/vereine/${id}`)}

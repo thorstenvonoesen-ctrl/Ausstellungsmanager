@@ -1,0 +1,7 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ArrowLeft,Headphones } from "lucide-react";
+import { requireOperator } from "@/lib/club-context";
+import { getClub } from "@/lib/data";
+export const dynamic="force-dynamic";
+export default async function Page({params}:{params:Promise<{id:string}>}){await requireOperator();const{id}=await params,c=await getClub(id);if(!c)notFound();return <><div className="detail-actions"><Link className="button secondary" href="/betreiber/vereine"><ArrowLeft size={17}/>Zur Liste</Link><button className="button secondary" disabled><Headphones size={16}/>Supportzugriff (vorbereitet)</button></div><div className="page-header"><div><h1>{c.name}</h1><p>{c.short_name||"Ohne Kurzname"}</p></div></div><div className="detail-card"><h2>Vereinsdaten · nur lesend</h2><div className="facts"><div className="fact"><span>Status</span><strong>{c.status==="blocked"?"Gesperrt":c.active?"Aktiv":"Inaktiv"}</strong></div><div className="fact"><span>Registriert seit</span><strong>{new Date(c.created_at).toLocaleDateString("de-DE")}</strong></div><div className="fact"><span>Anschrift</span><strong>{c.address||"–"}</strong></div><div className="fact"><span>Ansprechpartner</span><strong>{c.contact_person||"–"}</strong></div><div className="fact"><span>E-Mail</span><strong>{c.email||"–"}</strong></div><div className="fact"><span>Telefon</span><strong>{c.phone||"–"}</strong></div></div></div></>}

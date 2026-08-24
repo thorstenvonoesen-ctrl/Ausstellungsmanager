@@ -28,9 +28,9 @@ export const getViewerSession = cache(async ():Promise<ViewerSession|null> => {
   return{userId:user_id,email:user_email,role:role as ViewerSession["role"],club,isOperator};
 });
 export async function getActiveClub(){return(await getViewerSession())?.club??null}
-export async function requireActiveClub(){const session=await getViewerSession();if(!session)redirect("/verein-login");if(session.isOperator)redirect("/vereine");return session.club}
-export async function getClubActor():Promise<ClubActor>{const session=await getViewerSession();if(!session)redirect("/verein-login");if(session.isOperator)redirect("/vereine");return{userId:session.userId,clubId:session.club.id,roles:[session.role as ClubRole]}}
-export async function requireOperator(){const session=await getViewerSession();if(!session)redirect("/verein-login");if(!session.isOperator)redirect("/");return session}
+export async function requireActiveClub(){const session=await getViewerSession();if(!session)redirect("/verein-login");if(session.isOperator)redirect("/betreiber");return session.club}
+export async function getClubActor():Promise<ClubActor>{const session=await getViewerSession();if(!session)redirect("/verein-login");if(session.isOperator)redirect("/betreiber");return{userId:session.userId,clubId:session.club.id,roles:[session.role as ClubRole]}}
+export async function requireOperator(){const session=await getViewerSession();if(!session)redirect("/betreiber-login");if(!session.isOperator)redirect("/");return session}
 
 async function exists(query:string,values:string[]){const rows=await getSql().query(query,values) as{exists:boolean}[];return Boolean(rows[0]?.exists)}
 export async function assertShowBelongsToClub(showId:string,clubId:string){if(!await exists("SELECT EXISTS(SELECT 1 FROM shows WHERE id=$1 AND club_id=$2) AS exists",[showId,clubId]))throw new Error("Datensatz nicht gefunden oder kein Zugriff.")}
