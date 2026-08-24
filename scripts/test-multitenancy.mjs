@@ -8,6 +8,10 @@ for (const signature of ["getDashboardData(clubId:string)","getExhibitions(clubI
 for (const guard of ["assertShowBelongsToClub","assertExhibitorBelongsToClub","assertAnimalBelongsToClub"]) assert.ok(actionSource.includes(guard),`Server-Action-Guard fehlt: ${guard}`);
 const showAction=actionSource.slice(actionSource.indexOf("export async function saveExhibition"),actionSource.indexOf("const exhibitorSchema"));
 assert.ok(!showAction.includes("value(data,\"clubId\")"),"Ausstellungs-club_id darf nicht aus FormData übernommen werden");
+assert.ok(showAction.includes("showSchema.safeParse"),"Ausstellungsvalidierung darf keinen ungefangenen ZodError auslösen");
+assert.ok(showAction.includes("public_slug")&&showAction.includes("createPublicSlug"),"Neue Ausstellungen benötigen einen eindeutigen public_slug");
+for(const field of ["delivery_at","judging_at","collection_at","registration_deadline"])assert.ok(showAction.includes(field),`Zeitfeld fehlt in der Ausstellungs-Action: ${field}`);
+for(const status of ["draft","registration_open","registration_closed","judging","completed"])assert.ok(actionSource.includes(status),`Erlaubter Ausstellungsstatus fehlt: ${status}`);
 assert.ok(actionSource.includes("INSERT INTO club_users"),"Registrierung muss den ersten Vereinsadministrator anlegen");
 assert.ok(actionSource.includes("registrationSchema.safeParse"),"Registrierungsvalidierung darf keinen ungefangenen ZodError auslösen");
 assert.ok(actionSource.includes("shortName:z.string().trim().max(100)"),"Optionale Kurznamen müssen die unterstützte Länge akzeptieren");
