@@ -1,0 +1,1 @@
+import{ClubForm}from"@/components/club-form";import{FormHeader}from"@/components/ui";export default function Page(){return <div className="form-shell"><FormHeader title="Neuer Verein" back="/vereine"/><ClubForm/></div>}

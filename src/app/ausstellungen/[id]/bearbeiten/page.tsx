@@ -1,0 +1,2 @@
+import{notFound}from"next/navigation";import{ExhibitionForm}from"@/components/exhibition-form";import{FormHeader}from"@/components/ui";import{getClubs,getExhibition}from"@/lib/data";
+export const dynamic="force-dynamic";export default async function Page({params}:{params:Promise<{id:string}>}){const{id}=await params;const[item,clubs]=await Promise.all([getExhibition(id),getClubs()]);if(!item)notFound();return <div className="form-shell"><FormHeader title="Ausstellung bearbeiten" back="/ausstellungen"/><ExhibitionForm clubs={clubs} item={item}/></div>}

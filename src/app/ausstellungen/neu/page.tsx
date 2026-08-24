@@ -1,0 +1,2 @@
+import { FormHeader } from "@/components/ui";import { ExhibitionForm } from "@/components/exhibition-form";import { getClubs } from "@/lib/data";
+export const dynamic="force-dynamic";export default async function Page(){const clubs=await getClubs();return <div className="form-shell"><FormHeader title="Neue Ausstellung" back="/ausstellungen"/>{clubs.length?<ExhibitionForm clubs={clubs}/>:<p>Bitte legen Sie zuerst einen Verein an.</p>}</div>}

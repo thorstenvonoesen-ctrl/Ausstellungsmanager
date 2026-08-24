@@ -1,0 +1,2 @@
+import{notFound}from"next/navigation";import{ExhibitorForm}from"@/components/exhibitor-form";import{FormHeader}from"@/components/ui";import{getClubs,getExhibitor}from"@/lib/data";
+export const dynamic="force-dynamic";export default async function Page({params}:{params:Promise<{id:string}>}){const{id}=await params;const[item,clubs]=await Promise.all([getExhibitor(id),getClubs()]);if(!item)notFound();return <div className="form-shell"><FormHeader title="Aussteller bearbeiten" back={`/aussteller/${id}`}/><ExhibitorForm clubs={clubs} item={item}/></div>}

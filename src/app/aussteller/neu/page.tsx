@@ -1,0 +1,2 @@
+import{ExhibitorForm}from"@/components/exhibitor-form";import{FormHeader}from"@/components/ui";import{getClubs}from"@/lib/data";
+export const dynamic="force-dynamic";export default async function Page(){const clubs=await getClubs();return <div className="form-shell"><FormHeader title="Neuer Aussteller" back="/aussteller"/>{clubs.length?<ExhibitorForm clubs={clubs}/>:<p>Bitte legen Sie zuerst einen Verein an.</p>}</div>}

@@ -1,0 +1,11 @@
+import Link from "next/link";
+import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react";
+import { deleteEntity } from "@/app/actions";
+
+export function PageHeader({title,description,actionHref,actionLabel}:{title:string;description:string;actionHref?:string;actionLabel?:string}){return <header className="page-header"><div><h1>{title}</h1><p>{description}</p></div>{actionHref&&actionLabel?<Link className="button primary" href={actionHref}><Plus size={17}/>{actionLabel}</Link>:null}</header>}
+export function EmptyState({title,text,href,label}:{title:string;text:string;href:string;label:string}){return <div className="empty"><h3>{title}</h3><p>{text}</p><Link className="button primary" href={href}><Plus size={17}/>{label}</Link></div>}
+export function Status({children}:{children:string}){return <span className={`badge ${children.toLowerCase().replaceAll(" ","-")}`}>{children}</span>}
+export function FormHeader({title,back}:{title:string;back:string}){return <div className="form-head"><Link href={back} className="back"><ArrowLeft size={17}/>Zurück</Link><h1>{title}</h1></div>}
+export function FormActions({cancel}:{cancel:string}){return <div className="form-actions"><Link className="button secondary" href={cancel}>Abbrechen</Link><button className="button primary" type="submit">Speichern</button></div>}
+export function RowActions({editHref,id,kind}:{editHref:string;id:string;kind:"club"|"exhibition"|"exhibitor"|"entry"}){return <div className="row-actions"><Link className="icon-button" href={editHref} title="Bearbeiten"><Pencil size={16}/></Link><form action={deleteEntity}><input type="hidden" name="id" value={id}/><input type="hidden" name="kind" value={kind}/><button className="icon-button danger" title="Löschen" aria-label="Löschen"><Trash2 size={16}/></button></form></div>}
+export function Field({label,name,defaultValue="",type="text",required=false,wide=false,children}:{label:string;name:string;defaultValue?:string|number;type?:string;required?:boolean;wide?:boolean;children?:React.ReactNode}){return <label className={wide?"field wide":"field"}><span>{label}{required?<b> *</b>:null}</span>{children??<input name={name} type={type} defaultValue={defaultValue} required={required}/>}</label>}
