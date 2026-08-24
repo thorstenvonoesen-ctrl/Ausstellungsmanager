@@ -1,1 +1,1 @@
-import{ClubForm}from"@/components/club-form";import{FormHeader}from"@/components/ui";export default function Page(){return <div className="form-shell"><FormHeader title="Neuer Verein" back="/vereine"/><ClubForm/></div>}
+import { redirect } from "next/navigation";import { requireOperator } from "@/lib/club-context";export default async function Page(){await requireOperator();redirect("/vereine")}

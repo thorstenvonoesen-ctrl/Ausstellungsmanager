@@ -1,13 +1,17 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [dataSource, actionSource] = await Promise.all([
-  readFile("src/lib/data.ts", "utf8"), readFile("src/app/actions.ts", "utf8"),
+const [dataSource, actionSource, contextSource] = await Promise.all([
+  readFile("src/lib/data.ts", "utf8"), readFile("src/app/actions.ts", "utf8"), readFile("src/lib/club-context.ts", "utf8"),
 ]);
 for (const signature of ["getDashboardData(clubId:string)","getExhibitions(clubId:string)","getExhibitors(clubId:string","getEntries(clubId:string","getEntry(id:string,clubId:string)"]) assert.ok(dataSource.includes(signature),`Pflichtfilter fehlt: ${signature}`);
 for (const guard of ["assertShowBelongsToClub","assertExhibitorBelongsToClub","assertAnimalBelongsToClub"]) assert.ok(actionSource.includes(guard),`Server-Action-Guard fehlt: ${guard}`);
 const showAction=actionSource.slice(actionSource.indexOf("export async function saveExhibition"),actionSource.indexOf("const exhibitorSchema"));
 assert.ok(!showAction.includes("value(data,\"clubId\")"),"Ausstellungs-club_id darf nicht aus FormData übernommen werden");
+assert.ok(actionSource.includes("INSERT INTO club_users"),"Registrierung muss den ersten Vereinsadministrator anlegen");
+assert.ok(actionSource.includes("requireOperator()"),"Betreiberaktionen müssen serverseitig geschützt sein");
+assert.ok(contextSource.includes("session_token_hash=$1"),"Vereinskontext muss aus einer serverseitig geprüften Sitzung stammen");
+assert.ok(contextSource.includes("if(session.isOperator)redirect(\"/vereine\")"),"Betreiber dürfen nicht in den normalen Vereinsworkflow gelangen");
 
 const shows=[{id:"show-a",clubId:"club-a"},{id:"show-b",clubId:"club-b"}],exhibitors=[{id:"exhibitor-a",showId:"show-a"},{id:"exhibitor-b",showId:"show-b"}],animals=[{id:"animal-a",showId:"show-a"},{id:"animal-b",showId:"show-b"}];
 const showIdsFor=clubId=>new Set(shows.filter(row=>row.clubId===clubId).map(row=>row.id));
