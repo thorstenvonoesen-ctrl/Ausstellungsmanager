@@ -13,6 +13,8 @@
     "db:migrate-operator-role": "dotenv -e .env.local -- tsx scripts/migrate-operator-role.ts",
     "db:migrate-independent-operator": "dotenv -e .env.local -- tsx scripts/migrate-independent-operator.ts",
     "operator:setup": "tsx scripts/setup-operator.ts",
+    "db:migrate-masterdata": "tsx scripts/migrate-masterdata-public-entries.ts",
+    "masterdata:import": "tsx scripts/import-masterdata.ts",
     "db:check": "dotenv -e .env.local -- tsx scripts/check-schema.ts",
     "test:multitenancy": "node scripts/test-multitenancy.mjs"
   },

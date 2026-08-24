@@ -1,0 +1,2 @@
+"use client";import{Copy}from"lucide-react";import{useState}from"react";
+export function CopyPublicLink({slug}:{slug:string}){const[copied,setCopied]=useState(false);return <button className="button secondary compact-button" type="button" onClick={async()=>{await navigator.clipboard.writeText(`${location.origin}/melden/${slug}`);setCopied(true);setTimeout(()=>setCopied(false),1500)}}><Copy size={14}/>{copied?"Kopiert":"Link kopieren"}</button>}

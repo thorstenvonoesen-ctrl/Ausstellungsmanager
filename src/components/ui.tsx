@@ -3,7 +3,7 @@ import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react";
 import { deleteEntity } from "@/app/actions";
 
 export function PageHeader({title,description,actionHref,actionLabel}:{title:string;description:string;actionHref?:string;actionLabel?:string}){return <header className="page-header"><div><h1>{title}</h1><p>{description}</p></div>{actionHref&&actionLabel?<Link className="button primary" href={actionHref}><Plus size={17}/>{actionLabel}</Link>:null}</header>}
-export function EmptyState({title,text,href,label}:{title:string;text:string;href:string;label:string}){return <div className="empty"><h3>{title}</h3><p>{text}</p><Link className="button primary" href={href}><Plus size={17}/>{label}</Link></div>}
+export function EmptyState({title,text,href,label}:{title:string;text:string;href?:string;label?:string}){return <div className="empty"><h3>{title}</h3><p>{text}</p>{href&&label?<Link className="button primary" href={href}><Plus size={17}/>{label}</Link>:null}</div>}
 export function Status({children}:{children:string}){return <span className={`badge ${children.toLowerCase().replaceAll(" ","-")}`}>{children}</span>}
 export function FormHeader({title,back}:{title:string;back:string}){return <div className="form-head"><Link href={back} className="back"><ArrowLeft size={17}/>Zurück</Link><h1>{title}</h1></div>}
 export function FormActions({cancel}:{cancel:string}){return <div className="form-actions"><Link className="button secondary" href={cancel}>Abbrechen</Link><button className="button primary" type="submit">Speichern</button></div>}

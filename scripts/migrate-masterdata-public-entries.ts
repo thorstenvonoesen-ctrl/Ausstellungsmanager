@@ -1,0 +1,2 @@
+import {readFile}from"node:fs/promises";import{loadEnvFile}from"node:process";import{neon}from"@neondatabase/serverless";
+async function main(){if(!process.env.DATABASE_URL){try{loadEnvFile(".env.local")}catch{loadEnvFile(".env")}}const sql=neon(process.env.DATABASE_URL!),source=await readFile("database/005_masterdata_public_entries.sql","utf8");for(const statement of source.split(";").map(x=>x.trim()).filter(Boolean))await sql.query(statement);console.log("Migration 005 erfolgreich ausgeführt.")}main().catch(error=>{console.error(error);process.exitCode=1});

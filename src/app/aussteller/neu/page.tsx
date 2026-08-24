@@ -1,2 +1,1 @@
-import{ExhibitorForm}from"@/components/exhibitor-form";import{FormHeader}from"@/components/ui";import{requireActiveClub}from"@/lib/club-context";import{getExhibitions}from"@/lib/data";
-export const dynamic="force-dynamic";export default async function Page(){const club=await requireActiveClub();const exhibitions=await getExhibitions(club.id);return <div className="form-shell"><FormHeader title="Neuer Aussteller" back="/aussteller"/>{exhibitions.length?<ExhibitorForm exhibitions={exhibitions}/>:<p>Bitte legen Sie zuerst eine Ausstellung an.</p>}</div>}
+import{redirect}from"next/navigation";import{requireActiveClub}from"@/lib/club-context";export default async function Page(){await requireActiveClub();redirect("/aussteller")}

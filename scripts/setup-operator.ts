@@ -1,4 +1,5 @@
 import { randomBytes, scrypt as scryptCallback } from "node:crypto";
+import { loadEnvFile } from "node:process";
 import { promisify } from "node:util";
 import { neon } from "@neondatabase/serverless";
 
@@ -13,12 +14,19 @@ function prompt(label:string,{hidden=false}:{hidden?:boolean}={}){
   });
 }
 async function hashPassword(password:string){const salt=randomBytes(16).toString("hex"),derived=await scrypt(password,salt,64) as Buffer;return`scrypt$${salt}$${derived.toString("hex")}`}
+function loadDatabaseUrl(){
+  if(!process.env.DATABASE_URL){try{loadEnvFile(".env.local")}catch(error){if((error as NodeJS.ErrnoException).code!=="ENOENT")throw error}}
+  if(!process.env.DATABASE_URL){try{loadEnvFile(".env")}catch(error){if((error as NodeJS.ErrnoException).code!=="ENOENT")throw error}}
+  const databaseUrl=process.env.DATABASE_URL?.trim();
+  if(!databaseUrl||!/^postgres(?:ql)?:\/\//i.test(databaseUrl))throw new Error("Keine gültige PostgreSQL-DATABASE_URL gefunden. Bitte konfigurieren Sie DATABASE_URL in .env.local oder .env.");
+  return databaseUrl;
+}
 
 async function main(){
-  const databaseUrl=process.env.DATABASE_URL||await prompt("DATABASE_URL (wird nicht gespeichert): ",{hidden:true});
+  const databaseUrl=loadDatabaseUrl();
   const email=(await prompt("Betreiber-E-Mail: ")).trim().toLowerCase();
-  const password=await prompt("Passwort (mindestens 10 Zeichen): ",{hidden:true});
-  const confirmation=await prompt("Passwort wiederholen: ",{hidden:true});
+  const password=await prompt("Passwort: ",{hidden:true});
+  const confirmation=await prompt("Passwort bestätigen: ",{hidden:true});
   if(!/^\S+@\S+\.\S+$/.test(email))throw new Error("Die E-Mail-Adresse ist ungültig.");
   if(password.length<10||password.length>200)throw new Error("Das Passwort muss 10 bis 200 Zeichen lang sein.");
   if(password!==confirmation)throw new Error("Die Passwörter stimmen nicht überein.");
