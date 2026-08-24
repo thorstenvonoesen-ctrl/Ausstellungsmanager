@@ -11,6 +11,8 @@
     "db:migrate": "dotenv -e .env.local -- tsx scripts/migrate.ts",
     "db:migrate-auth": "dotenv -e .env.local -- tsx scripts/migrate-auth.ts",
     "db:migrate-operator-role": "dotenv -e .env.local -- tsx scripts/migrate-operator-role.ts",
+    "db:migrate-independent-operator": "dotenv -e .env.local -- tsx scripts/migrate-independent-operator.ts",
+    "operator:setup": "tsx scripts/setup-operator.ts",
     "db:check": "dotenv -e .env.local -- tsx scripts/check-schema.ts",
     "test:multitenancy": "node scripts/test-multitenancy.mjs"
   },

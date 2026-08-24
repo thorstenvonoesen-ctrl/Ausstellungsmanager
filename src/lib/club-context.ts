@@ -7,25 +7,28 @@ import { hashSessionToken, SESSION_COOKIE } from "@/lib/auth";
 import type { Club } from "@/lib/types";
 
 export type ClubRole = "club_admin" | "show_manager" | "cashier" | "registration_office" | "judge" | "viewer";
-export type ViewerSession = { userId:string; email:string; role:ClubRole|"operator"; club:Club; isOperator:boolean };
+export type ViewerSession =
+  | { userId:string; email:string; role:"operator"; club:null; isOperator:true }
+  | { userId:string; email:string; role:ClubRole; club:Club; isOperator:false };
 export type ClubActor = { userId:string; clubId:string; roles:ClubRole[] };
 
 const projection = `SELECT cu.id AS user_id,coalesce(cu.email,'') AS user_email,cu.role,
-  c.id,c.name,coalesce(c.short_name,'') AS short_name,coalesce(c.street,'') AS street,
+  c.id AS club_id,c.name AS club_name,coalesce(c.short_name,'') AS short_name,coalesce(c.street,'') AS street,
   coalesce(c.postal_code,'') AS postal_code,coalesce(c.city,'') AS city,
   concat_ws(', ',nullif(c.street,''),nullif(concat_ws(' ',c.postal_code,c.city),'')) AS address,
   coalesce(c.contact_name,'') AS contact_person,coalesce(c.email,'') AS email,
   coalesce(c.phone,'') AS phone,c.logo_url,c.active,c.created_at::text AS created_at
-  FROM club_users cu JOIN clubs c ON c.id=cu.club_id`;
+  FROM club_users cu LEFT JOIN clubs c ON c.id=cu.club_id`;
 
 export const getViewerSession = cache(async ():Promise<ViewerSession|null> => {
   const token=(await cookies()).get(SESSION_COOKIE)?.value;
   if(!token)return null;
-  const rows=await getSql().query(`${projection} WHERE cu.session_token_hash=$1 AND cu.session_expires_at>now() AND cu.active=true`,[hashSessionToken(token)]) as Array<Club&{user_id:string;user_email:string;role:string}>;
+  const rows=await getSql().query(`${projection} WHERE cu.session_token_hash=$1 AND cu.session_expires_at>now() AND cu.active=true`,[hashSessionToken(token)]) as Array<Omit<Club,"id"|"name">&{user_id:string;user_email:string;role:string;club_id:string|null;club_name:string|null}>;
   const row=rows[0];if(!row)return null;
-  const isOperator=row.role==="operator";if(!isOperator&&!row.active)return null;
-  const{user_id,user_email,role,...club}=row;
-  return{userId:user_id,email:user_email,role:role as ViewerSession["role"],club,isOperator};
+  if(row.role==="operator")return{userId:row.user_id,email:row.user_email,role:"operator",club:null,isOperator:true};
+  if(!row.club_id||!row.club_name||!row.active)return null;
+  const{user_id,user_email,role,club_id,club_name,...clubFields}=row;
+  return{userId:user_id,email:user_email,role:role as ClubRole,club:{...clubFields,id:club_id,name:club_name},isOperator:false};
 });
 export async function getActiveClub(){return(await getViewerSession())?.club??null}
 export async function requireActiveClub(){const session=await getViewerSession();if(!session)redirect("/verein-login");if(session.isOperator)redirect("/betreiber");return session.club}
