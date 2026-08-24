@@ -1,56 +1,22 @@
 import "server-only";
 import { getSql } from "@/lib/db";
 import { logDatabaseError, withDatabaseLogging } from "@/lib/database-error";
-import type { AnimalEntry, Club, Exhibition, Exhibitor } from "@/lib/types";
+import type { AnimalEntry, BreedVariant, Club, Exhibition, Exhibitor } from "@/lib/types";
 
-export async function getCounts() {
-  const sql = getSql();
-  const [clubs, exhibitions, exhibitors, entries] = await Promise.all([
-    withDatabaseLogging("dashboard.count.clubs", () => sql`SELECT count(*)::int AS count FROM clubs`),
-    withDatabaseLogging("dashboard.count.exhibitions", () => sql`SELECT count(*)::int AS count FROM exhibitions`),
-    withDatabaseLogging("dashboard.count.exhibitors", () => sql`SELECT count(*)::int AS count FROM exhibitors`),
-    withDatabaseLogging("dashboard.count.animal_entries", () => sql`SELECT count(*)::int AS count FROM animal_entries`),
-  ]);
-  return { clubs: clubs[0].count as number, exhibitions: exhibitions[0].count as number, exhibitors: exhibitors[0].count as number, entries: entries[0].count as number };
-}
+const clubSelect = `SELECT id,name,short_name,street,postal_code,city,concat_ws(', ',nullif(street,''),nullif(concat_ws(' ',postal_code,city),'')) AS address,contact_name AS contact_person,email,phone,logo_url,created_at::text AS created_at FROM clubs`;
+const showSelect = `SELECT s.id,s.club_id,c.short_name AS club_name,s.name AS title,s.venue_name AS venue,concat_ws(', ',nullif(s.venue_street,''),nullif(concat_ws(' ',s.venue_postal_code,s.venue_city),'')) AS venue_address,s.venue_street,s.venue_postal_code,s.venue_city,s.show_start::text AS starts_at,s.show_end::text AS ends_at,s.registration_deadline::text AS registration_deadline,s.status,coalesce(s.subtitle,'') AS description,s.created_at::text AS created_at FROM shows s JOIN clubs c ON c.id=s.club_id`;
+const exhibitorSelect = `SELECT x.id,x.show_id,s.name AS show_title,s.club_id,c.short_name AS club_name,x.first_name,x.last_name,x.street,''::text AS house_number,x.postal_code,x.city,x.email,x.phone,coalesce(x.exhibitor_club_name,'') AS association_name,NULL::text AS membership_number,coalesce(x.age_group,'') AS age_group,x.created_at::text AS created_at FROM exhibitors x JOIN shows s ON s.id=x.show_id JOIN clubs c ON c.id=s.club_id`;
+const animalSelect = `SELECT a.id,a.entry_id,a.show_id AS exhibition_id,s.name AS exhibition_title,e.exhibitor_id,x.first_name||' '||x.last_name AS exhibitor_name,a.breed_color_variant_id AS breed_variant_id,coalesce(a.entry_type,'') AS species,b.name AS breed,cv.name AS color,coalesce(a.sex,'unbekannt') AS sex,extract(year from current_date)::int AS birth_year,coalesce(a.age_class,'') AS age_class,coalesce(a.ring_number,'') AS ring_number,a.cage_number,coalesce(e.total_amount,0)::text AS entry_fee,e.status,a.created_at::text AS created_at FROM animals a JOIN entries e ON e.id=a.entry_id JOIN shows s ON s.id=a.show_id JOIN exhibitors x ON x.id=e.exhibitor_id JOIN breed_color_variants bcv ON bcv.id=a.breed_color_variant_id JOIN breeds b ON b.id=bcv.breed_id JOIN color_variants cv ON cv.id=bcv.color_variant_id`;
 
-const emptyCounts = { clubs: 0, exhibitions: 0, exhibitors: 0, entries: 0 };
-
-export async function getDashboardData() {
-  const [countsResult, exhibitionsResult] = await Promise.allSettled([
-    getCounts(),
-    getExhibitions(),
-  ]);
-
-  if (countsResult.status === "rejected") {
-    logDatabaseError("dashboard.counts.fallback", countsResult.reason);
-  }
-  if (exhibitionsResult.status === "rejected") {
-    logDatabaseError("dashboard.exhibitions.fallback", exhibitionsResult.reason);
-  }
-
-  return {
-    counts: countsResult.status === "fulfilled" ? countsResult.value : emptyCounts,
-    exhibitions:
-      exhibitionsResult.status === "fulfilled" ? exhibitionsResult.value : [],
-  };
-}
-
-export async function getClubs() { return await withDatabaseLogging("clubs.list", async () => await getSql()`SELECT * FROM clubs ORDER BY name` as Club[]); }
-export async function getClub(id: string) { const rows = await getSql()`SELECT * FROM clubs WHERE id=${id}` as Club[]; return rows[0]; }
-export async function getExhibitions() { return await withDatabaseLogging("exhibitions.list", async () => await getSql()`SELECT e.*, c.short_name AS club_name FROM exhibitions e JOIN clubs c ON c.id=e.club_id ORDER BY e.starts_at DESC` as Exhibition[]); }
-export async function getExhibition(id: string) { const rows = await getSql()`SELECT e.*, c.short_name AS club_name FROM exhibitions e JOIN clubs c ON c.id=e.club_id WHERE e.id=${id}` as Exhibition[]; return rows[0]; }
-export async function getExhibitors(search = "") {
-  if (!search) return await getSql()`SELECT x.*, c.short_name AS club_name FROM exhibitors x JOIN clubs c ON c.id=x.club_id ORDER BY x.last_name, x.first_name` as Exhibitor[];
-  const term = `%${search}%`;
-  return await getSql()`SELECT x.*, c.short_name AS club_name FROM exhibitors x JOIN clubs c ON c.id=x.club_id WHERE x.first_name ILIKE ${term} OR x.last_name ILIKE ${term} OR x.city ILIKE ${term} OR x.association_name ILIKE ${term} OR x.email ILIKE ${term} ORDER BY x.last_name, x.first_name` as Exhibitor[];
-}
-export async function getExhibitor(id: string) { const rows = await getSql()`SELECT x.*, c.short_name AS club_name FROM exhibitors x JOIN clubs c ON c.id=x.club_id WHERE x.id=${id}` as Exhibitor[]; return rows[0]; }
-export async function getEntries(search = "", exhibitionId = "") {
-  const term = `%${search}%`; const sql = getSql();
-  if (search && exhibitionId) return await sql`SELECT a.*, e.title AS exhibition_title, x.first_name || ' ' || x.last_name AS exhibitor_name FROM animal_entries a JOIN exhibitions e ON e.id=a.exhibition_id JOIN exhibitors x ON x.id=a.exhibitor_id WHERE a.exhibition_id=${exhibitionId} AND (a.breed ILIKE ${term} OR a.ring_number ILIKE ${term} OR x.first_name ILIKE ${term} OR x.last_name ILIKE ${term}) ORDER BY a.created_at DESC` as AnimalEntry[];
-  if (exhibitionId) return await sql`SELECT a.*, e.title AS exhibition_title, x.first_name || ' ' || x.last_name AS exhibitor_name FROM animal_entries a JOIN exhibitions e ON e.id=a.exhibition_id JOIN exhibitors x ON x.id=a.exhibitor_id WHERE a.exhibition_id=${exhibitionId} ORDER BY a.created_at DESC` as AnimalEntry[];
-  if (search) return await sql`SELECT a.*, e.title AS exhibition_title, x.first_name || ' ' || x.last_name AS exhibitor_name FROM animal_entries a JOIN exhibitions e ON e.id=a.exhibition_id JOIN exhibitors x ON x.id=a.exhibitor_id WHERE a.breed ILIKE ${term} OR a.ring_number ILIKE ${term} OR x.first_name ILIKE ${term} OR x.last_name ILIKE ${term} ORDER BY a.created_at DESC` as AnimalEntry[];
-  return await sql`SELECT a.*, e.title AS exhibition_title, x.first_name || ' ' || x.last_name AS exhibitor_name FROM animal_entries a JOIN exhibitions e ON e.id=a.exhibition_id JOIN exhibitors x ON x.id=a.exhibitor_id ORDER BY a.created_at DESC` as AnimalEntry[];
-}
-export async function getEntry(id: string) { const rows = await getSql()`SELECT a.*, e.title AS exhibition_title, x.first_name || ' ' || x.last_name AS exhibitor_name FROM animal_entries a JOIN exhibitions e ON e.id=a.exhibition_id JOIN exhibitors x ON x.id=a.exhibitor_id WHERE a.id=${id}` as AnimalEntry[]; return rows[0]; }
+export async function getCounts(){const sql=getSql();const[clubs,shows,exhibitors,animals]=await Promise.all([withDatabaseLogging("dashboard.count.clubs",()=>sql`SELECT count(*)::int AS count FROM clubs`),withDatabaseLogging("dashboard.count.shows",()=>sql`SELECT count(*)::int AS count FROM shows`),withDatabaseLogging("dashboard.count.exhibitors",()=>sql`SELECT count(*)::int AS count FROM exhibitors`),withDatabaseLogging("dashboard.count.animals",()=>sql`SELECT count(*)::int AS count FROM animals`)]);return{clubs:Number(clubs[0].count),exhibitions:Number(shows[0].count),exhibitors:Number(exhibitors[0].count),entries:Number(animals[0].count)}}
+const emptyCounts={clubs:0,exhibitions:0,exhibitors:0,entries:0};
+export async function getDashboardData(){const[countsResult,showsResult]=await Promise.allSettled([getCounts(),getExhibitions()]);if(countsResult.status==="rejected")logDatabaseError("dashboard.counts.fallback",countsResult.reason);if(showsResult.status==="rejected")logDatabaseError("dashboard.shows.fallback",showsResult.reason);return{counts:countsResult.status==="fulfilled"?countsResult.value:emptyCounts,exhibitions:showsResult.status==="fulfilled"?showsResult.value:[]}}
+export async function getClubs(){return await withDatabaseLogging("clubs.list",async()=>await getSql().query(`${clubSelect} ORDER BY name`) as Club[])}
+export async function getClub(id:string){const rows=await withDatabaseLogging("clubs.detail",async()=>await getSql().query(`${clubSelect} WHERE id=$1`,[id]) as Club[]);return rows[0]}
+export async function getExhibitions(){return await withDatabaseLogging("shows.list",async()=>await getSql().query(`${showSelect} ORDER BY s.show_start DESC NULLS LAST`) as Exhibition[])}
+export async function getExhibition(id:string){const rows=await withDatabaseLogging("shows.detail",async()=>await getSql().query(`${showSelect} WHERE s.id=$1`,[id]) as Exhibition[]);return rows[0]}
+export async function getExhibitors(search=""){const term=`%${search}%`;const where=search?" WHERE x.first_name ILIKE $1 OR x.last_name ILIKE $1 OR x.city ILIKE $1 OR x.exhibitor_club_name ILIKE $1 OR x.email ILIKE $1":"";return await withDatabaseLogging("exhibitors.list",async()=>await getSql().query(`${exhibitorSelect}${where} ORDER BY x.last_name,x.first_name`,search?[term]:[]) as Exhibitor[])}
+export async function getExhibitor(id:string){const rows=await withDatabaseLogging("exhibitors.detail",async()=>await getSql().query(`${exhibitorSelect} WHERE x.id=$1`,[id]) as Exhibitor[]);return rows[0]}
+export async function getEntries(search="",exhibitionId=""){const conditions:string[]=[];const params:string[]=[];if(exhibitionId){params.push(exhibitionId);conditions.push(`a.show_id=$${params.length}`)}if(search){params.push(`%${search}%`);conditions.push(`(b.name ILIKE $${params.length} OR a.ring_number ILIKE $${params.length} OR x.first_name ILIKE $${params.length} OR x.last_name ILIKE $${params.length})`)}const where=conditions.length?` WHERE ${conditions.join(" AND ")}`:"";return await withDatabaseLogging("animals.list",async()=>await getSql().query(`${animalSelect}${where} ORDER BY a.created_at DESC`,params) as AnimalEntry[])}
+export async function getEntry(id:string){const rows=await withDatabaseLogging("animals.detail",async()=>await getSql().query(`${animalSelect} WHERE a.id=$1`,[id]) as AnimalEntry[]);return rows[0]}
+export async function getBreedVariants(){return await withDatabaseLogging("breed-variants.list",async()=>await getSql()`SELECT bcv.id,b.name AS breed,cv.name AS color FROM breed_color_variants bcv JOIN breeds b ON b.id=bcv.breed_id JOIN color_variants cv ON cv.id=bcv.color_variant_id WHERE bcv.active=true AND b.active=true AND cv.active=true ORDER BY b.name,cv.name` as BreedVariant[])}
