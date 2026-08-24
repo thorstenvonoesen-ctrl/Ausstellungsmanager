@@ -1,19 +1,44 @@
 import "server-only";
 import { getSql } from "@/lib/db";
+import { logDatabaseError, withDatabaseLogging } from "@/lib/database-error";
 import type { AnimalEntry, Club, Exhibition, Exhibitor } from "@/lib/types";
 
 export async function getCounts() {
   const sql = getSql();
   const [clubs, exhibitions, exhibitors, entries] = await Promise.all([
-    sql`SELECT count(*)::int AS count FROM clubs`, sql`SELECT count(*)::int AS count FROM exhibitions`,
-    sql`SELECT count(*)::int AS count FROM exhibitors`, sql`SELECT count(*)::int AS count FROM animal_entries`,
+    withDatabaseLogging("dashboard.count.clubs", () => sql`SELECT count(*)::int AS count FROM clubs`),
+    withDatabaseLogging("dashboard.count.exhibitions", () => sql`SELECT count(*)::int AS count FROM exhibitions`),
+    withDatabaseLogging("dashboard.count.exhibitors", () => sql`SELECT count(*)::int AS count FROM exhibitors`),
+    withDatabaseLogging("dashboard.count.animal_entries", () => sql`SELECT count(*)::int AS count FROM animal_entries`),
   ]);
   return { clubs: clubs[0].count as number, exhibitions: exhibitions[0].count as number, exhibitors: exhibitors[0].count as number, entries: entries[0].count as number };
 }
 
-export async function getClubs() { return await getSql()`SELECT * FROM clubs ORDER BY name` as Club[]; }
+const emptyCounts = { clubs: 0, exhibitions: 0, exhibitors: 0, entries: 0 };
+
+export async function getDashboardData() {
+  const [countsResult, exhibitionsResult] = await Promise.allSettled([
+    getCounts(),
+    getExhibitions(),
+  ]);
+
+  if (countsResult.status === "rejected") {
+    logDatabaseError("dashboard.counts.fallback", countsResult.reason);
+  }
+  if (exhibitionsResult.status === "rejected") {
+    logDatabaseError("dashboard.exhibitions.fallback", exhibitionsResult.reason);
+  }
+
+  return {
+    counts: countsResult.status === "fulfilled" ? countsResult.value : emptyCounts,
+    exhibitions:
+      exhibitionsResult.status === "fulfilled" ? exhibitionsResult.value : [],
+  };
+}
+
+export async function getClubs() { return await withDatabaseLogging("clubs.list", async () => await getSql()`SELECT * FROM clubs ORDER BY name` as Club[]); }
 export async function getClub(id: string) { const rows = await getSql()`SELECT * FROM clubs WHERE id=${id}` as Club[]; return rows[0]; }
-export async function getExhibitions() { return await getSql()`SELECT e.*, c.short_name AS club_name FROM exhibitions e JOIN clubs c ON c.id=e.club_id ORDER BY e.starts_at DESC` as Exhibition[]; }
+export async function getExhibitions() { return await withDatabaseLogging("exhibitions.list", async () => await getSql()`SELECT e.*, c.short_name AS club_name FROM exhibitions e JOIN clubs c ON c.id=e.club_id ORDER BY e.starts_at DESC` as Exhibition[]); }
 export async function getExhibition(id: string) { const rows = await getSql()`SELECT e.*, c.short_name AS club_name FROM exhibitions e JOIN clubs c ON c.id=e.club_id WHERE e.id=${id}` as Exhibition[]; return rows[0]; }
 export async function getExhibitors(search = "") {
   if (!search) return await getSql()`SELECT x.*, c.short_name AS club_name FROM exhibitors x JOIN clubs c ON c.id=x.club_id ORDER BY x.last_name, x.first_name` as Exhibitor[];

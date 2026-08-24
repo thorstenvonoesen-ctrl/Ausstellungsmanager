@@ -23,6 +23,12 @@ npm run dev
 
 Die Anwendung läuft danach unter `http://localhost:3000`.
 
+Das vorhandene Schema kann ohne Änderungen an der Datenbank geprüft werden:
+
+```bash
+npm run db:check
+```
+
 ## Datenbank
 
 Die reproduzierbare Initialmigration liegt unter `database/001_initial.sql`. Sie erzeugt Tabellen, Fremdschlüssel, Prüfbedingungen und Indizes. Die Migration kann mit `npm run db:migrate` ausgeführt werden. Es werden keine Beispieldaten angelegt.
