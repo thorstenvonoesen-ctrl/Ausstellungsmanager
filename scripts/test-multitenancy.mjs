@@ -9,6 +9,8 @@ for (const guard of ["assertShowBelongsToClub","assertExhibitorBelongsToClub","a
 const showAction=actionSource.slice(actionSource.indexOf("export async function saveExhibition"),actionSource.indexOf("const exhibitorSchema"));
 assert.ok(!showAction.includes("value(data,\"clubId\")"),"Ausstellungs-club_id darf nicht aus FormData übernommen werden");
 assert.ok(actionSource.includes("INSERT INTO club_users"),"Registrierung muss den ersten Vereinsadministrator anlegen");
+assert.ok(actionSource.includes("registrationSchema.safeParse"),"Registrierungsvalidierung darf keinen ungefangenen ZodError auslösen");
+assert.ok(actionSource.includes("shortName:z.string().trim().max(100)"),"Optionale Kurznamen müssen die unterstützte Länge akzeptieren");
 assert.ok(actionSource.includes("requireOperator()"),"Betreiberaktionen müssen serverseitig geschützt sein");
 assert.ok(contextSource.includes("session_token_hash=$1"),"Vereinskontext muss aus einer serverseitig geprüften Sitzung stammen");
 assert.ok(contextSource.includes("if(session.isOperator)redirect(\"/vereine\")"),"Betreiber dürfen nicht in den normalen Vereinsworkflow gelangen");
