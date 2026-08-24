@@ -7,7 +7,7 @@ import { assertAnimalBelongsToClub,assertExhibitorBelongsToClub,assertShowBelong
 import { clearSessionCookie,createSessionToken,hashPassword,hashSessionToken,normalizeEmail,SESSION_MAX_AGE,setSessionCookie,verifyPassword } from "@/lib/auth";
 import { getSql } from "@/lib/db";
 import { logDatabaseError } from "@/lib/database-error";
-import { importMasterdata,parseMasterdata } from "@/lib/masterdata";
+import { importMasterdataBulk as importMasterdata,parseMasterdata } from "@/lib/masterdata";
 
 const text=z.string().trim().min(1,"Pflichtfeld").max(300),optional=z.string().trim().max(500).default(""),uuid=z.string().uuid(),email=z.union([z.literal(""),z.string().email("Ungültige E-Mail-Adresse")]);
 const value=(data:FormData,key:string)=>String(data.get(key)??"");
