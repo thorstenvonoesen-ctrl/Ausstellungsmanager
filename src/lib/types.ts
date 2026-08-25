@@ -8,3 +8,22 @@ export type MasterdataHierarchy={categories:MasterdataOption[];groups:Masterdata
 export type ShowFee={id:string;name:string;fee_type:string;amount:string;youth_amount:string|null;mandatory:boolean;active:boolean;sort_order:number};
 export type ShowSection={id:string;name:string};
 export type PublicShow={id:string;club_id:string;title:string;venue:string;registration_deadline:string;status:string;club_name:string;club_active:boolean;fees:ShowFee[];sections:ShowSection[]};
+export type EntryWorkflowStatus="received"|"reviewed"|"question"|"cancelled";
+export type PaymentStatus="open"|"partial"|"paid";
+export type ManagedEntry={
+  id:string;show_id:string;show_title:string;exhibitor_id:string;exhibitor_number:number|null;
+  registration_number:string;submitted_at:string;workflow_status:EntryWorkflowStatus;
+  first_name:string;last_name:string;street:string;house_number:string;postal_code:string;city:string;
+  email:string;phone:string;livestock_number:string;association_name:string;age_group:string;
+  single_count:number;aviary_count:number;stem_count:number;animal_count:number;
+  total_amount:string;paid_amount:string;remaining_amount:string;payment_status:PaymentStatus;
+  paid_at:string|null;payment_method:string|null;
+};
+export type ManagedAnimal={
+  id:string;entry_id:string;show_id:string;exhibitor_number:number|null;exhibitor_name:string;
+  category:string;breed_group:string;breed:string;color:string;breed_variant_id:string;
+  category_sort:number;group_sort:number;breed_sort:number;color_sort:number;
+  species:string;sex:string;age_class:string;ring_number:string;cage_number:string|null;
+  catalog_number:number|null;withdrawn:boolean;status:string;
+};
+export type EntryFeeItem={id:string;description:string;fee_type:string;quantity:string;unit_amount:string;total_amount:string};
